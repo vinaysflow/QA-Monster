@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+.env
+.qa-monster-cache/
+coverage/
+*.test.ts.snap
+.DS_Store

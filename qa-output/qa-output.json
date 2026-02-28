@@ -1,0 +1,564 @@
+{
+  "understanding": {
+    "target": {
+      "file": "/Users/vinaytripathi/Documents/PDF scraper/pdf-ocr-mvp/app/version.py",
+      "purpose": "This code retrieves the short git commit hash either from a file created during Docker build or by running a git command if the file is not found. The commit hash is cached after the first call to improve performance.",
+      "mainFunctions": [
+        {
+          "name": "get_commit",
+          "description": "Returns the short git commit hash, either from a file or by running a git command.",
+          "parameters": [],
+          "returns": "str"
+        }
+      ],
+      "complexity": {
+        "level": "low",
+        "reasons": [
+          "The code mainly involves file operations and a simple git command. The logic is straightforward with error handling for file read and git command execution."
+        ]
+      }
+    },
+    "confidence": 0.85,
+    "completeness": 0.5
+  },
+  "codeContext": {
+    "targetFile": {
+      "path": "/Users/vinaytripathi/Documents/PDF scraper/pdf-ocr-mvp/app/version.py",
+      "content": "\"\"\"Build version info — populated at Docker build time or read from git at runtime.\"\"\"\n\nfrom __future__ import annotations\n\nimport subprocess\nfrom pathlib import Path\n\n_commit: str | None = None\n\n\ndef get_commit() -> str:\n    \"\"\"Return the short git commit hash, cached after first call.\"\"\"\n    global _commit\n    if _commit is not None:\n        return _commit\n\n    # 1. Check GIT_COMMIT file written during Docker build\n    commit_file = Path(__file__).resolve().parent.parent / \"GIT_COMMIT\"\n    if commit_file.exists():\n        _commit = commit_file.read_text().strip() or \"unknown\"\n        return _commit\n\n    # 2. Fall back to live git (works in local dev)\n    try:\n        _commit = subprocess.check_output(\n            [\"git\", \"rev-parse\", \"--short\", \"HEAD\"],\n            stderr=subprocess.DEVNULL,\n            cwd=Path(__file__).resolve().parent.parent,\n        ).decode().strip()\n    except Exception:\n        _commit = \"unknown\"\n    return _commit\n",
+      "functions": [
+        {
+          "name": "get_commit",
+          "parameters": [],
+          "returnType": "str",
+          "isAsync": false,
+          "lineStart": 11,
+          "lineEnd": 32,
+          "body": "def get_commit() -> str:\n    \"\"\"Return the short git commit hash, cached after first call.\"\"\"\n    global _commit\n    if _commit is not None:\n        return _commit\n\n    # 1. Check GIT_COMMIT file written during Docker build\n    commit_file = Path(__file__).resolve().parent.parent / \"GIT_COMMIT\"\n    if commit_file.exists():\n        _commit = commit_file.read_text().strip() or \"unknown\"\n        return _commit\n\n    # 2. Fall back to live git (works in local dev)\n    try:\n        _commit = subprocess.check_output(\n            [\"git\", \"rev-parse\", \"--short\", \"HEAD\"],\n            stderr=subprocess.DEVNULL,\n            cwd=Path(__file__).resolve().parent.parent,\n        ).decode().strip()\n    except Exception:\n        _commit = \"unknown\"\n    return _commit"
+        }
+      ],
+      "classes": [],
+      "types": [],
+      "imports": [
+        {
+          "from": "__future__",
+          "imports": [
+            "annotations"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "from": "subprocess",
+          "imports": [
+            "subprocess"
+          ],
+          "isTypeOnly": false,
+          "defaultImport": "subprocess"
+        },
+        {
+          "from": "pathlib",
+          "imports": [
+            "Path"
+          ],
+          "isTypeOnly": false
+        }
+      ],
+      "exports": [
+        {
+          "name": "get_commit",
+          "type": "function"
+        }
+      ]
+    },
+    "dependencies": [],
+    "relatedFiles": [],
+    "testFiles": [],
+    "configFiles": []
+  },
+  "insights": {
+    "complexity": {
+      "cyclomatic": 3,
+      "cognitive": 3.5999999999999996,
+      "linesOfCode": 33,
+      "functionCount": 1,
+      "dependencyCount": 3
+    },
+    "patterns": [
+      "null-checking"
+    ],
+    "edgeCases": [
+      "Edge case 1: GIT_COMMIT file exists but is empty",
+      "Edge case 2: GIT_COMMIT file exists but contains invalid commit hash",
+      "Edge case 3: GIT_COMMIT file is not accessible",
+      "Edge case 4: Exception occurs during git command execution"
+    ],
+    "risks": [
+      "Error condition 1: Unable to read GIT_COMMIT file",
+      "Error condition 2: Unable to execute git command"
+    ],
+    "testability": "high"
+  },
+  "recommendations": {
+    "testTypes": [
+      "unit"
+    ],
+    "priorities": [
+      "Test scenario 1: Retrieve commit hash from file",
+      "Test scenario 2: Retrieve commit hash using git command"
+    ],
+    "strategies": [
+      "boundary-value-analysis"
+    ],
+    "focusAreas": [
+      "Edge case 1: GIT_COMMIT file exists but is empty",
+      "Edge case 2: GIT_COMMIT file exists but contains invalid commit hash",
+      "Edge case 3: GIT_COMMIT file is not accessible",
+      "Edge case 4: Exception occurs during git command execution"
+    ]
+  },
+  "uncertainties": [],
+  "confidence": {
+    "overall": 0.6900000000000001,
+    "byAspect": {
+      "structure": 0.6,
+      "logic": 0.85,
+      "dependencies": 0.5,
+      "edgeCases": 0.7,
+      "errorHandling": 0.8
+    }
+  },
+  "metadata": {
+    "duration": 33533,
+    "cost": 0.001093,
+    "filesRead": 1
+  },
+  "projectInfo": {
+    "language": "javascript",
+    "testFramework": "vitest",
+    "structure": "single"
+  },
+  "security": {
+    "sca": {
+      "vulnerabilities": [
+        {
+          "id": "@typescript-eslint/eslint-plugin-undefined",
+          "package": "@typescript-eslint/eslint-plugin",
+          "version": "6.16.0 - 7.5.0",
+          "severity": "high",
+          "description": "",
+          "fixVersion": true,
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "6.16.0 - 7.5.0"
+          ]
+        },
+        {
+          "id": "@typescript-eslint/parser-undefined",
+          "package": "@typescript-eslint/parser",
+          "version": "6.16.0 - 7.5.0",
+          "severity": "high",
+          "description": "",
+          "fixVersion": true,
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "6.16.0 - 7.5.0"
+          ]
+        },
+        {
+          "id": "@typescript-eslint/type-utils-undefined",
+          "package": "@typescript-eslint/type-utils",
+          "version": "6.16.0 - 7.5.0",
+          "severity": "high",
+          "description": "",
+          "fixVersion": true,
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "6.16.0 - 7.5.0"
+          ]
+        },
+        {
+          "id": "@typescript-eslint/typescript-estree-undefined",
+          "package": "@typescript-eslint/typescript-estree",
+          "version": "6.16.0 - 7.5.0",
+          "severity": "high",
+          "description": "",
+          "fixVersion": true,
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "6.16.0 - 7.5.0"
+          ]
+        },
+        {
+          "id": "@typescript-eslint/utils-undefined",
+          "package": "@typescript-eslint/utils",
+          "version": "6.16.0 - 7.5.0",
+          "severity": "high",
+          "description": "",
+          "fixVersion": true,
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "6.16.0 - 7.5.0"
+          ]
+        },
+        {
+          "id": "minimatch-undefined",
+          "package": "minimatch",
+          "version": "<=3.1.3 || 9.0.0 - 9.0.6",
+          "severity": "high",
+          "description": "",
+          "fixVersion": true,
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "<=3.1.3 || 9.0.0 - 9.0.6"
+          ]
+        },
+        {
+          "id": "minimatch-minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern",
+          "package": "minimatch",
+          "version": "<3.1.3",
+          "severity": "high",
+          "description": "minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern",
+          "scanner": "npm-audit",
+          "url": "https://github.com/advisories/GHSA-3ppc-4f35-3m26",
+          "affectedVersions": [
+            "<3.1.3"
+          ]
+        },
+        {
+          "id": "minimatch-minimatch has ReDoS: matchOne() combinatorial backtracking via multiple non-adjacent GLOBSTAR segments",
+          "package": "minimatch",
+          "version": "<3.1.3",
+          "severity": "high",
+          "description": "minimatch has ReDoS: matchOne() combinatorial backtracking via multiple non-adjacent GLOBSTAR segments",
+          "scanner": "npm-audit",
+          "url": "https://github.com/advisories/GHSA-7r86-cg39-jmmj",
+          "affectedVersions": [
+            "<3.1.3"
+          ]
+        },
+        {
+          "id": "minimatch-minimatch ReDoS: nested *() extglobs generate catastrophically backtracking regular expressions",
+          "package": "minimatch",
+          "version": "<3.1.4",
+          "severity": "high",
+          "description": "minimatch ReDoS: nested *() extglobs generate catastrophically backtracking regular expressions",
+          "scanner": "npm-audit",
+          "url": "https://github.com/advisories/GHSA-23c5-xmqv-rm74",
+          "affectedVersions": [
+            "<3.1.4"
+          ]
+        },
+        {
+          "id": "rollup-undefined",
+          "package": "rollup",
+          "version": "4.0.0 - 4.58.0",
+          "severity": "high",
+          "description": "",
+          "fixVersion": true,
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "4.0.0 - 4.58.0"
+          ]
+        },
+        {
+          "id": "rollup-Rollup 4 has Arbitrary File Write via Path Traversal",
+          "package": "rollup",
+          "version": ">=4.0.0 <4.59.0",
+          "severity": "high",
+          "description": "Rollup 4 has Arbitrary File Write via Path Traversal",
+          "scanner": "npm-audit",
+          "url": "https://github.com/advisories/GHSA-mw96-cpmx-2vgc",
+          "affectedVersions": [
+            ">=4.0.0 <4.59.0"
+          ]
+        },
+        {
+          "id": "ajv-undefined",
+          "package": "ajv",
+          "version": "<6.14.0",
+          "severity": "medium",
+          "description": "",
+          "fixVersion": true,
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "<6.14.0"
+          ]
+        },
+        {
+          "id": "ajv-ajv has ReDoS when using `$data` option",
+          "package": "ajv",
+          "version": "<6.14.0",
+          "severity": "medium",
+          "description": "ajv has ReDoS when using `$data` option",
+          "scanner": "npm-audit",
+          "url": "https://github.com/advisories/GHSA-2g4f-4pwh-qvx6",
+          "affectedVersions": [
+            "<6.14.0"
+          ]
+        },
+        {
+          "id": "esbuild-undefined",
+          "package": "esbuild",
+          "version": "<=0.24.2",
+          "severity": "medium",
+          "description": "",
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "<=0.24.2"
+          ]
+        },
+        {
+          "id": "esbuild-esbuild enables any website to send any requests to the development server and read the response",
+          "package": "esbuild",
+          "version": "<=0.24.2",
+          "severity": "medium",
+          "description": "esbuild enables any website to send any requests to the development server and read the response",
+          "scanner": "npm-audit",
+          "url": "https://github.com/advisories/GHSA-67mh-4wv8-2f99",
+          "affectedVersions": [
+            "<=0.24.2"
+          ]
+        },
+        {
+          "id": "vite-undefined",
+          "package": "vite",
+          "version": "0.11.0 - 6.1.6",
+          "severity": "medium",
+          "description": "",
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "0.11.0 - 6.1.6"
+          ]
+        },
+        {
+          "id": "vite-node-undefined",
+          "package": "vite-node",
+          "version": "<=2.2.0-beta.2",
+          "severity": "medium",
+          "description": "",
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "<=2.2.0-beta.2"
+          ]
+        },
+        {
+          "id": "vitest-undefined",
+          "package": "vitest",
+          "version": "0.0.1 - 0.0.12 || 0.0.29 - 0.0.122 || 0.3.3 - 2.2.0-beta.2",
+          "severity": "medium",
+          "description": "",
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "0.0.1 - 0.0.12 || 0.0.29 - 0.0.122 || 0.3.3 - 2.2.0-beta.2"
+          ]
+        },
+        {
+          "id": "qs-undefined",
+          "package": "qs",
+          "version": "6.7.0 - 6.14.1",
+          "severity": "low",
+          "description": "",
+          "fixVersion": true,
+          "scanner": "npm-audit",
+          "affectedVersions": [
+            "6.7.0 - 6.14.1"
+          ]
+        },
+        {
+          "id": "qs-qs's arrayLimit bypass in comma parsing allows denial of service",
+          "package": "qs",
+          "version": ">=6.7.0 <=6.14.1",
+          "severity": "low",
+          "description": "qs's arrayLimit bypass in comma parsing allows denial of service",
+          "scanner": "npm-audit",
+          "url": "https://github.com/advisories/GHSA-w7fw-mjwx-w883",
+          "affectedVersions": [
+            ">=6.7.0 <=6.14.1"
+          ]
+        }
+      ],
+      "summary": {
+        "critical": 0,
+        "high": 11,
+        "medium": 7,
+        "low": 2
+      },
+      "scanner": "npm-audit",
+      "scannedAt": "2026-02-27T04:17:22.054Z",
+      "packagesScanned": 0,
+      "packagesWithVulnerabilities": 13
+    },
+    "sast": {
+      "findings": [],
+      "summary": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "scannedAt": "2026-02-27T04:16:54.281Z",
+      "filesScanned": 1
+    }
+  },
+  "qualityGate": {
+    "passed": true,
+    "rules": [
+      {
+        "rule": {
+          "id": "no-critical-security",
+          "name": "No Critical Security Vulnerabilities",
+          "metric": "security",
+          "threshold": 0,
+          "operator": "eq",
+          "severity": "error",
+          "message": "Critical security vulnerabilities must be resolved before merge"
+        },
+        "passed": true,
+        "actualValue": 0,
+        "message": "✅ No Critical Security Vulnerabilities: Passed (0)"
+      },
+      {
+        "rule": {
+          "id": "max-complexity",
+          "name": "Maximum Cyclomatic Complexity",
+          "metric": "complexity",
+          "threshold": 50,
+          "operator": "lte",
+          "severity": "warning",
+          "message": "Cyclomatic complexity should not exceed 50"
+        },
+        "passed": false,
+        "message": "❌ Maximum Cyclomatic Complexity: Failed (undefined <= 50)"
+      },
+      {
+        "rule": {
+          "id": "no-critical-sast",
+          "name": "No Critical SAST Findings",
+          "metric": "sast",
+          "threshold": 0,
+          "operator": "eq",
+          "severity": "error",
+          "message": "Critical SAST findings must be resolved before merge"
+        },
+        "passed": true,
+        "actualValue": 0,
+        "message": "✅ No Critical SAST Findings: Passed (0)"
+      }
+    ],
+    "summary": {
+      "total": 3,
+      "passed": 2,
+      "failed": 0,
+      "warnings": 1
+    }
+  },
+  "fixes": [
+    {
+      "id": "dep-fix-@typescript-eslint/eslint-plugin-undefined",
+      "issueId": "@typescript-eslint/eslint-plugin-undefined",
+      "type": "dependency-update",
+      "severity": "high",
+      "description": "Update @typescript-eslint/eslint-plugin from 6.16.0 - 7.5.0 to true to fix vulnerability",
+      "suggestedCode": "\"@typescript-eslint/eslint-plugin\": \"true\"",
+      "confidence": 0.9,
+      "file": "package.json",
+      "line": 1,
+      "explanation": "Vulnerability @typescript-eslint/eslint-plugin-undefined: . Update to version true to resolve."
+    },
+    {
+      "id": "dep-fix-@typescript-eslint/parser-undefined",
+      "issueId": "@typescript-eslint/parser-undefined",
+      "type": "dependency-update",
+      "severity": "high",
+      "description": "Update @typescript-eslint/parser from 6.16.0 - 7.5.0 to true to fix vulnerability",
+      "suggestedCode": "\"@typescript-eslint/parser\": \"true\"",
+      "confidence": 0.9,
+      "file": "package.json",
+      "line": 1,
+      "explanation": "Vulnerability @typescript-eslint/parser-undefined: . Update to version true to resolve."
+    },
+    {
+      "id": "dep-fix-@typescript-eslint/type-utils-undefined",
+      "issueId": "@typescript-eslint/type-utils-undefined",
+      "type": "dependency-update",
+      "severity": "high",
+      "description": "Update @typescript-eslint/type-utils from 6.16.0 - 7.5.0 to true to fix vulnerability",
+      "suggestedCode": "\"@typescript-eslint/type-utils\": \"true\"",
+      "confidence": 0.9,
+      "file": "package.json",
+      "line": 1,
+      "explanation": "Vulnerability @typescript-eslint/type-utils-undefined: . Update to version true to resolve."
+    },
+    {
+      "id": "dep-fix-@typescript-eslint/typescript-estree-undefined",
+      "issueId": "@typescript-eslint/typescript-estree-undefined",
+      "type": "dependency-update",
+      "severity": "high",
+      "description": "Update @typescript-eslint/typescript-estree from 6.16.0 - 7.5.0 to true to fix vulnerability",
+      "suggestedCode": "\"@typescript-eslint/typescript-estree\": \"true\"",
+      "confidence": 0.9,
+      "file": "package.json",
+      "line": 1,
+      "explanation": "Vulnerability @typescript-eslint/typescript-estree-undefined: . Update to version true to resolve."
+    },
+    {
+      "id": "dep-fix-@typescript-eslint/utils-undefined",
+      "issueId": "@typescript-eslint/utils-undefined",
+      "type": "dependency-update",
+      "severity": "high",
+      "description": "Update @typescript-eslint/utils from 6.16.0 - 7.5.0 to true to fix vulnerability",
+      "suggestedCode": "\"@typescript-eslint/utils\": \"true\"",
+      "confidence": 0.9,
+      "file": "package.json",
+      "line": 1,
+      "explanation": "Vulnerability @typescript-eslint/utils-undefined: . Update to version true to resolve."
+    },
+    {
+      "id": "dep-fix-minimatch-undefined",
+      "issueId": "minimatch-undefined",
+      "type": "dependency-update",
+      "severity": "high",
+      "description": "Update minimatch from <=3.1.3 || 9.0.0 - 9.0.6 to true to fix vulnerability",
+      "suggestedCode": "\"minimatch\": \"true\"",
+      "confidence": 0.9,
+      "file": "package.json",
+      "line": 1,
+      "explanation": "Vulnerability minimatch-undefined: . Update to version true to resolve."
+    },
+    {
+      "id": "dep-fix-rollup-undefined",
+      "issueId": "rollup-undefined",
+      "type": "dependency-update",
+      "severity": "high",
+      "description": "Update rollup from 4.0.0 - 4.58.0 to true to fix vulnerability",
+      "suggestedCode": "\"rollup\": \"true\"",
+      "confidence": 0.9,
+      "file": "package.json",
+      "line": 1,
+      "explanation": "Vulnerability rollup-undefined: . Update to version true to resolve."
+    },
+    {
+      "id": "dep-fix-ajv-undefined",
+      "issueId": "ajv-undefined",
+      "type": "dependency-update",
+      "severity": "medium",
+      "description": "Update ajv from <6.14.0 to true to fix vulnerability",
+      "suggestedCode": "\"ajv\": \"true\"",
+      "confidence": 0.9,
+      "file": "package.json",
+      "line": 1,
+      "explanation": "Vulnerability ajv-undefined: . Update to version true to resolve."
+    },
+    {
+      "id": "dep-fix-qs-undefined",
+      "issueId": "qs-undefined",
+      "type": "dependency-update",
+      "severity": "low",
+      "description": "Update qs from 6.7.0 - 6.14.1 to true to fix vulnerability",
+      "suggestedCode": "\"qs\": \"true\"",
+      "confidence": 0.9,
+      "file": "package.json",
+      "line": 1,
+      "explanation": "Vulnerability qs-undefined: . Update to version true to resolve."
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.github
+*.md
+.env
+.env.*
+qa-output
+tests
+dashboard
+vscode-extension
+demo
+*.log
+.DS_Store

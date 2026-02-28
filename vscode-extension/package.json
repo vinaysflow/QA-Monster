@@ -1,0 +1,55 @@
+{
+  "name": "qa-monster-extension",
+  "displayName": "QA Monster",
+  "description": "QA Monster code analysis extension for VS Code",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:qaMonster.analyzeFile"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "qaMonster.analyzeFile",
+        "title": "QA Monster: Analyze Current File"
+      },
+      {
+        "command": "qaMonster.applyFix",
+        "title": "QA Monster: Apply Suggested Fix"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "qaMonsterResults",
+          "name": "QA Monster Analysis",
+          "when": "qaMonster.hasResults"
+        }
+      ]
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "qaMonster.analyzeFile",
+          "when": "resourceLangId == typescript || resourceLangId == javascript"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^5.3.3"
+  }
+}

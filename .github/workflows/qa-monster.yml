@@ -1,0 +1,208 @@
+name: QA Monster Analysis
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build QA Monster
+        run: npm run build
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v40
+        with:
+          files: |
+            **/*.ts
+            **/*.tsx
+            **/*.js
+            **/*.jsx
+            **/*.py
+            **/*.java
+            **/*.go
+
+      - name: Analyze changed files
+        id: analyze
+        if: steps.changed-files.outputs.any_changed == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SNYK_API_KEY: ${{ secrets.SNYK_API_KEY }}
+          QA_MONSTER_SECURITY_ENABLED: 'true'
+          QA_MONSTER_SAST_ENABLED: 'true'
+        run: |
+          mkdir -p qa-output
+          echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
+          
+          # Analyze each changed file
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [ -f "$file" ]; then
+              echo "Analyzing $file..."
+              npm run dev analyze "$file" -- -o qa-output || true
+            fi
+          done
+          
+          # Combine results if multiple files
+          if [ -f qa-output/qa-output.json ]; then
+            echo "analysis_complete=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post PR comment
+        if: steps.analyze.outputs.analysis_complete == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read analysis results
+            const resultsPath = path.join(process.cwd(), 'qa-output', 'qa-output.json');
+            if (!fs.existsSync(resultsPath)) {
+              console.log('No analysis results found');
+              return;
+            }
+            
+            const results = JSON.parse(fs.readFileSync(resultsPath, 'utf-8'));
+            
+            // Build comment
+            let comment = '## 🔍 QA Monster Analysis Results\n\n';
+            
+            // Security findings
+            if (results.security) {
+              comment += '### 🔒 Security Analysis\n\n';
+              
+              if (results.security.sca) {
+                const sca = results.security.sca;
+                comment += `#### Dependency Vulnerabilities (SCA)\n`;
+                comment += `- **Critical:** ${sca.summary.critical}\n`;
+                comment += `- **High:** ${sca.summary.high}\n`;
+                comment += `- **Medium:** ${sca.summary.medium}\n`;
+                comment += `- **Low:** ${sca.summary.low}\n\n`;
+                
+                if (sca.vulnerabilities.length > 0) {
+                  comment += '<details><summary>View vulnerabilities</summary>\n\n';
+                  sca.vulnerabilities.slice(0, 10).forEach(v => {
+                    comment += `- **${v.package}@${v.version}** (${v.severity}): ${v.description}`;
+                    if (v.cve) comment += ` [CVE: ${v.cve}]`;
+                    if (v.fixVersion) comment += ` - Fix: ${v.fixVersion}`;
+                    comment += '\n';
+                  });
+                  if (sca.vulnerabilities.length > 10) {
+                    comment += `\n*... and ${sca.vulnerabilities.length - 10} more*\n`;
+                  }
+                  comment += '</details>\n\n';
+                }
+              }
+              
+              if (results.security.sast) {
+                const sast = results.security.sast;
+                comment += `#### Code-Level Vulnerabilities (SAST)\n`;
+                comment += `- **Critical:** ${sast.summary.critical}\n`;
+                comment += `- **High:** ${sast.summary.high}\n`;
+                comment += `- **Medium:** ${sast.summary.medium}\n`;
+                comment += `- **Low:** ${sast.summary.low}\n\n`;
+                
+                if (sast.findings.length > 0) {
+                  comment += '<details><summary>View findings</summary>\n\n';
+                  sast.findings.slice(0, 10).forEach(f => {
+                    comment += `- **${f.patternName}** (${f.severity}) at \`${f.file}:${f.line}\`\n`;
+                    comment += `  ${f.message}\n`;
+                    comment += `  💡 ${f.recommendation}\n\n`;
+                  });
+                  if (sast.findings.length > 10) {
+                    comment += `*... and ${sast.findings.length - 10} more*\n`;
+                  }
+                  comment += '</details>\n\n';
+                }
+              }
+            }
+            
+            // Code metrics
+            comment += '### 📊 Code Metrics\n\n';
+            const complexity = results.understanding.target.complexity;
+            comment += `- **Cyclomatic Complexity:** ${complexity.cyclomatic}\n`;
+            comment += `- **Cognitive Complexity:** ${complexity.cognitive}\n`;
+            comment += `- **Lines of Code:** ${complexity.linesOfCode}\n`;
+            comment += `- **Functions:** ${complexity.functionCount}\n\n`;
+            
+            // Test recommendations
+            if (results.recommendations && results.recommendations.testTypes.length > 0) {
+              comment += '### 🧪 Test Recommendations\n\n';
+              comment += `**Test Types:** ${results.recommendations.testTypes.join(', ')}\n\n`;
+              if (results.recommendations.priorities.length > 0) {
+                comment += '**Priorities:**\n';
+                results.recommendations.priorities.forEach(p => {
+                  comment += `- ${p}\n`;
+                });
+              }
+            }
+            
+            // Quality gate status
+            const hasCritical = results.security?.sca?.summary.critical > 0 || 
+                               results.security?.sast?.summary.critical > 0;
+            const hasHigh = results.security?.sca?.summary.high > 0 || 
+                          results.security?.sast?.summary.high > 0;
+            
+            if (hasCritical || hasHigh) {
+              comment += '\n### ⚠️ Quality Gate\n\n';
+              if (hasCritical) {
+                comment += '❌ **Critical vulnerabilities detected** - Review required before merge\n';
+              } else if (hasHigh) {
+                comment += '⚠️ **High severity vulnerabilities detected** - Review recommended\n';
+              }
+            } else {
+              comment += '\n### ✅ Quality Gate\n\n';
+              comment += '✅ No critical or high severity vulnerabilities detected\n';
+            }
+            
+            // Post comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Quality Gate Check
+        if: steps.analyze.outputs.analysis_complete == 'true'
+        run: |
+          # Check for critical vulnerabilities
+          if [ -f qa-output/qa-output.json ]; then
+            CRITICAL=$(node -e "
+              const fs = require('fs');
+              const data = JSON.parse(fs.readFileSync('qa-output/qa-output.json', 'utf-8'));
+              const scaCritical = data.security?.sca?.summary.critical || 0;
+              const sastCritical = data.security?.sast?.summary.critical || 0;
+              console.log(scaCritical + sastCritical);
+            ")
+            
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "❌ Quality gate failed: $CRITICAL critical vulnerabilities detected"
+              exit 1
+            else
+              echo "✅ Quality gate passed"
+            fi
+          fi

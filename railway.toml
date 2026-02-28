@@ -1,0 +1,13 @@
+# Railway deployment config for QA Monster API
+# Deploy: connect repo and set OPENAI_API_KEY in Variables
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "node dist/cli/index.js serve"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
