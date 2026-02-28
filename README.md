@@ -1,128 +1,215 @@
-# QA Monster Agent
+# QA Monster
 
-Autonomous code reading agent that analyzes code and generates comprehensive QA test packages. Works on any codebase with any language/framework combination.
+Autonomous code analysis agent that reads your codebase, understands it, and generates comprehensive QA test packages — for any language, any framework, any team.
+
+---
+
+## Who is this for?
+
+| You are… | QA Monster helps you… |
+|----------|----------------------|
+| **Solo developer** | Generate tests you'd never write yourself — edge cases, error paths, security checks |
+| **Startup team** | Ship faster with auto-generated test suites and code reviews on every PR |
+| **QA / SDET engineer** | Get a head start on test plans, coverage analysis, and regression scenarios |
+| **Enterprise team** | Enforce quality gates, run security scans (SCA + SAST), and integrate into CI/CD |
+| **Open-source maintainer** | Audit contributions with automated code review and test generation |
+
+Works on **any codebase** — point it at your project and go.
+
+---
 
 ## Features
 
-- ✅ **Language Agnostic**: Supports TypeScript, JavaScript, Python, Java, Go (extensible)
-- ✅ **Framework Agnostic**: Auto-detects Jest, Vitest, Pytest, JUnit, etc.
-- ✅ **Cost Optimized**: Uses GPT-3.5-turbo by default, smart caching, context optimization
-- ✅ **Large Codebase Ready**: Intelligent chunking and sampling for >10k line codebases
-- ✅ **Zero-Config**: Works out of the box, configurable when needed
-- ✅ **Production Ready**: CLI, API, error handling, logging
+- **Language Agnostic** — TypeScript, JavaScript, Python today; plugin system for any language
+- **Framework Agnostic** — Auto-detects Jest, Vitest, Pytest; extensible for others
+- **LLM-Powered Understanding** — Uses GPT-3.5-turbo to understand intent, not just syntax
+- **Cost Optimized** — Smart caching, context selection, configurable spend limits
+- **Large Codebase Ready** — Intelligent chunking and sampling for 10k+ line projects
+- **Security Scanning** — Built-in SCA (npm audit / Snyk) and SAST pattern detection
+- **Quality Gates** — Configurable pass/fail rules for complexity, coverage, security
+- **Auto-Fix Engine** — Suggests and generates patches for common issues
+- **Zero Config** — Works out of the box; fully configurable when you need it
+- **Multiple Interfaces** — CLI, REST API, CI/CD integration, VS Code extension scaffold
+
+---
 
 ## Quick Start
 
-### Installation
+### 1. Install
 
 ```bash
+git clone https://github.com/vinaysflow/QA-Monster.git
+cd QA-Monster
 npm install
 ```
 
-### Configuration
+### 2. Configure
 
-Create a `.env` file:
+Create a `.env` file in the project root:
 
 ```env
-OPENAI_API_KEY=your_api_key_here
+OPENAI_API_KEY=your_openai_api_key
 QA_MONSTER_COST_LIMIT=10.00
 ```
 
-### Usage
-
-#### Analyze a file
+### 3. Build
 
 ```bash
-npm run dev analyze src/services/matching/MatchingService.ts
+npm run build
 ```
 
-#### Generate tests
+### 4. Analyze your code
+
+```bash
+# Point at any file in your project
+npm run dev analyze /path/to/your-project/src/app.ts -o ./qa-output
+
+# Python works too
+npm run dev analyze /path/to/your-project/app/main.py -o ./qa-output
+```
+
+### 5. Generate tests
 
 ```bash
 npm run dev generate qa-output/qa-output.json
 ```
 
-#### Start API server
+That's it. QA Monster reads your code, understands it, and produces a full test suite.
+
+---
+
+## Usage
+
+### CLI
+
+#### `analyze <file>`
+
+Analyze a source file and produce a QA package (code review + test plan).
+
+```bash
+npm run dev analyze src/services/UserService.ts -o ./qa-output
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-o, --output <dir>` | Output directory | `./qa-output` |
+| `-f, --format <formats>` | Output formats: `json`, `markdown`, `code` | `json,code` |
+| `--cost-limit <amount>` | Max cost in USD | `10.00` |
+| `--max-depth <depth>` | Dependency traversal depth | `2` |
+| `--verbose` | Verbose logging | off |
+
+#### `generate <package>`
+
+Generate runnable test code from a QA package.
+
+```bash
+npm run dev generate qa-output/qa-output.json -f jest
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-o, --output <dir>` | Output directory | `./tests/generated` |
+| `-f, --framework <name>` | Test framework (`jest`, `vitest`, `pytest`) | auto-detect |
+
+#### `watch <file>`
+
+Watch a file and re-generate tests on every save.
+
+```bash
+npm run dev watch src/services/UserService.ts
+```
+
+#### `serve`
+
+Start the REST API server.
 
 ```bash
 npm run dev serve
 ```
 
-## CLI Commands
+---
 
-### `analyze <file>`
+### REST API
 
-Analyze a code file and generate QA package.
+Start the server with `npm run dev serve` (development) or `npm start` (production). Default port: **3000**.
 
-Options:
-- `-o, --output <dir>`: Output directory (default: `./qa-output`)
-- `-f, --format <formats>`: Output formats: `json,markdown,code` (default: `json,code`)
-- `--cost-limit <amount>`: Maximum cost in USD (default: `10.00`)
-- `--max-depth <depth>`: Maximum dependency depth (default: `2`)
-- `--verbose`: Verbose logging
+#### `POST /api/analyze`
 
-### `generate <package>`
-
-Generate test code from QA package.
-
-Options:
-- `-o, --output <dir>`: Output directory (default: `./tests/generated`)
-- `-f, --framework <name>`: Test framework (auto-detect if not specified)
-
-### `watch <file>`
-
-Watch a file and auto-generate tests on change.
-
-Options:
-- `-d, --debounce <ms>`: Debounce delay in milliseconds (default: `1000`)
-
-## API
-
-### POST `/api/analyze`
-
-Analyze a code file.
-
-Request:
-```json
-{
-  "filePath": "src/services/matching/MatchingService.ts",
-  "config": {
-    "options": {
-      "maxDependencyDepth": 2,
-      "costLimit": 10.00
+```bash
+curl -X POST http://localhost:3000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filePath": "/path/to/your-project/src/app.ts",
+    "config": {
+      "projectRoot": "/path/to/your-project",
+      "options": { "maxDependencyDepth": 2, "costLimit": 10 }
     }
-  }
-}
+  }'
 ```
 
-Response:
-```json
-{
-  "understanding": { ... },
-  "codeContext": { ... },
-  "insights": { ... },
-  "recommendations": { ... }
-}
+#### `POST /api/generate-tests`
+
+```bash
+curl -X POST http://localhost:3000/api/generate-tests \
+  -H "Content-Type: application/json" \
+  -d '{
+    "package": { "...QA package from /api/analyze..." },
+    "options": { "framework": "jest" }
+  }'
 ```
 
-### POST `/api/generate-tests`
+#### `POST /api/batch-analyze`
 
-Generate test code from QA package.
+Analyze multiple files in one request.
 
-Request:
-```json
-{
-  "package": { ... },
-  "options": {
-    "framework": "jest",
-    "outputDir": "./tests/generated"
-  }
-}
+#### `GET /health`
+
+Health check endpoint (useful for deployment probes).
+
+---
+
+### CI/CD Integration
+
+Add QA Monster to any repo's CI pipeline. Example for GitHub Actions:
+
+```yaml
+name: QA Monster
+
+on:
+  pull_request:
+    paths: ['**.ts', '**.py', '**.js']
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run QA Monster
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          npx github:vinaysflow/QA-Monster#main analyze src/app.ts -o ./qa-out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qa-report
+          path: qa-out/
 ```
+
+---
 
 ## Configuration
 
-Create `qa-monster.config.json`:
+Optional `qa-monster.config.json` in your project root:
 
 ```json
 {
@@ -141,70 +228,103 @@ Create `qa-monster.config.json`:
 }
 ```
 
-## Architecture
-
-- **Plugin System**: Extensible language and framework plugins
-- **Cost Optimization**: GPT-3.5-turbo default, smart caching, context selection
-- **Large Codebase Handling**: Chunking, sampling, iterative analysis
-- **Multi-Level Caching**: Files, dependencies, LLM responses, analysis results
+---
 
 ## Supported Languages
 
-- TypeScript/JavaScript (via ts-morph)
-- **Python** (via AST script — requires Python 3.9+ on path for `.py` analysis)
-- Java (via JavaParser)
-- Go (via go/ast)
+| Language | Extensions | Parser |
+|----------|-----------|--------|
+| TypeScript / JavaScript | `.ts`, `.tsx`, `.js`, `.jsx` | ts-morph |
+| Python | `.py` | Python AST (requires Python 3.9+ on PATH) |
+
+More languages can be added via the plugin system — see [docs/INTEGRATE_YOUR_CODEBASE.md](docs/INTEGRATE_YOUR_CODEBASE.md).
 
 ## Supported Test Frameworks
 
-- Jest
-- Vitest
-- Pytest (Python)
-- JUnit
+| Framework | Language | Detection |
+|-----------|----------|-----------|
+| Jest | TypeScript / JavaScript | `package.json` |
+| Vitest | TypeScript / JavaScript | `vite.config.*` or `package.json` |
+| Pytest | Python | `pyproject.toml`, `requirements.txt`, `setup.py` |
 
-## Cost Optimization
+---
 
-- Default model: GPT-3.5-turbo (~$0.001/1k tokens input, $0.002/1k tokens output)
-- Smart context selection (only relevant code)
-- Aggressive caching
-- Chunking for large files
-- Configurable cost limits
+## Deployment
 
-## Performance
+### Local
 
-- Small files (<500 lines): ~10-20s, $0.01-0.05
-- Medium files (500-2000 lines): ~30-60s, $0.05-0.15
-- Large files (>2000 lines): ~1-3min, $0.15-0.50
+```bash
+npm run build && npm start
+```
+
+### Docker
+
+```bash
+docker build -t qa-monster .
+docker run -p 3000:3000 -e OPENAI_API_KEY=sk-... qa-monster
+```
+
+The Dockerfile includes Node 20 + Python 3, so both TS/JS and Python codebases work out of the box.
+
+### Railway (one-click cloud deploy)
+
+See [docs/RAILWAY_DEPLOY.md](docs/RAILWAY_DEPLOY.md) for the full guide. TL;DR:
+
+1. Connect this repo on [railway.app](https://railway.app)
+2. Set `OPENAI_API_KEY` in Variables
+3. Deploy — the API is live at your Railway URL
+
+---
+
+## Architecture
+
+```
+┌─────────────┐     ┌──────────────┐     ┌──────────────────┐
+│  CLI / API  │────▶│  Core Agent   │────▶│  Plugin Registry │
+└─────────────┘     └──────┬───────┘     └──────────────────┘
+                           │                  │           │
+                    ┌──────▼───────┐   ┌──────▼──┐  ┌─────▼─────┐
+                    │  LLM Service │   │Language  │  │ Framework │
+                    │  (OpenAI)    │   │ Plugins  │  │  Plugins  │
+                    └──────────────┘   └─────────┘  └───────────┘
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+        ┌─────▼────┐ ┌────▼─────┐ ┌────▼─────┐
+        │ Security │ │ Quality  │ │ Auto-Fix │
+        │ Scanner  │ │  Gates   │ │  Engine  │
+        └──────────┘ └──────────┘ └──────────┘
+```
+
+- **Plugin System** — Extensible language and framework support
+- **Cost Optimization** — GPT-3.5-turbo default, multi-level caching, smart context selection
+- **Large Codebase Handling** — Chunking, sampling, iterative analysis
+- **Security** — SCA (npm audit, Snyk) + SAST pattern detection
+
+---
+
+## Cost Estimates
+
+| Codebase size | Time | Estimated cost |
+|--------------|------|---------------|
+| Small (<500 lines) | ~10–20s | $0.01–0.05 |
+| Medium (500–2k lines) | ~30–60s | $0.05–0.15 |
+| Large (2k+ lines) | ~1–3 min | $0.15–0.50 |
+
+---
 
 ## Development
 
 ```bash
-# Build
-npm run build
-
-# Test
-npm test
-
-# Lint
-npm run lint
-
-# Format
-npm run format
+npm run build      # Compile TypeScript
+npm test           # Run test suite
+npm run lint       # Lint
+npm run format     # Prettier
+npm run dev        # Run CLI in dev mode (tsx)
 ```
+
+---
 
 ## License
 
 UNLICENSED — All rights reserved. This is proprietary software.
-
-## Enterprise & Railway (Python codebases)
-
-To run QA Monster for **Python codebases** (e.g. Odee) and deploy on **Railway** for review and test generation, see **[docs/RAILWAY_PYTHON_ENTERPRISE.md](docs/RAILWAY_PYTHON_ENTERPRISE.md)**. The Dockerfile includes Python 3 for parsing `.py` files; set `OPENAI_API_KEY` and deploy.
-
-## Proprietary Tech Scope
-
-QA Monster is explicitly scoped to support the following proprietary codebases for code review and test generation:
-
-- **Odee** (Python, pytest) — Deploy via Railway or run inside Odee's CI. See [docs/DEPLOY_TO_ODEE.md](docs/DEPLOY_TO_ODEE.md).
-- **PDF OCR MVP** (Python, pytest) — Run CLI or API with `projectRoot` pointing at the pdf-ocr-mvp repo. See [docs/PROPRIETARY_TECH_SCOPE.md](docs/PROPRIETARY_TECH_SCOPE.md).
-
-For the full list of supported codebases, per-codebase usage examples, and how to add more, see **[docs/PROPRIETARY_TECH_SCOPE.md](docs/PROPRIETARY_TECH_SCOPE.md)**.
